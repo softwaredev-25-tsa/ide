@@ -61,7 +61,6 @@
         try {
           console.log("sending to login()");
           const text = await window.api.login(username, password);
-          document.getElementById("login-button").innerText = text;
           if (text == "Login successful!") {
             showNotification("Login successful!", "check-circle", "#5FC234");
             window.api.login_change(true); // Notify main process
@@ -83,15 +82,16 @@
           return;
         }
 
-        try {
-          const text = await window.api.create_account(username, password);
-          document.getElementById("create-button").innerText = text;
-          showNotification("Account created successfully!", "check-circle", "#5FC234");
-        } catch (err) {
-          console.error("Error during account creation:", err);
-          showNotification("Failed to create account.", "error-circle", "#F48872");
+        if (inputValidation(password)) {
+          try {
+            const text = await window.api.create_account(username, password);
+            showNotification("Account created successfully!", "check-circle", "#5FC234");
+          } catch (err) {
+            console.error("Error during account creation:", err);
+            showNotification("Failed to create account.", "error-circle", "#F48872");
+          }
         }
-      }
+        }
 
       // Switch to account creation mode
       function switchCreate() {
