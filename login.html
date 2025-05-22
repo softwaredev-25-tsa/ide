@@ -38,8 +38,8 @@
       const loginButton = document.getElementById("login-button");
 
       // Handles input validation for account creation
-      function inputValidation(pass) { 
-        isValid = window.api.login_change(pass)
+      async function inputValidation(pass) { 
+        const isValid = await window.api.input_validation(pass)
         if (isValid != "") {
           showNotification(isValid, "error-circle", "#F48872")
           return false
@@ -73,7 +73,6 @@
 
       // Handles account creation
       async function create() {
-        console.log("sending to create()");
         const username = document.getElementById("username").value;
         const password = document.getElementById("password").value;
 
@@ -82,12 +81,11 @@
           return;
         }
 
-        if (inputValidation(password)) {
+        if (await inputValidation(password)) {
           try {
             const text = await window.api.create_account(username, password);
             showNotification("Account created successfully!", "check-circle", "#5FC234");
           } catch (err) {
-            console.error("Error during account creation:", err);
             showNotification("Failed to create account.", "error-circle", "#F48872");
           }
         }

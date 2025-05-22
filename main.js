@@ -6,21 +6,21 @@ const crypto = require("crypto");
 const fs = require("fs");
 const fsp = require("fs").promises;
 const { v4: uuidv4 } = require("uuid");
-const owasp = require("owasp-password-strength-test")
+const owasp = require("owasp-password-strength-test");
 
-const forwardID = uuidv4() // ID for identifying file sender
+const forwardID = uuidv4(); // ID for identifying file sender
 let win;
 let token;
 let url = "http:/localhost:8080";
 
 // defaults for newly created passwords
 owasp.config({
-  allowPassphrases: true, 
+  allowPassphrases: true,
   maxLength: 127,
   minLength: 8,
   minPhraseLength: 15,
-  minOptionalTestsToPass: 4
-})
+  minOptionalTestsToPass: 4,
+});
 
 function createWindow() {
   win = new BrowserWindow({
@@ -76,7 +76,7 @@ app.whenReady().then(() => {
         preload: path.join(__dirname, "login_preload.js"), // points to preload script
       },
     });
-    child.loadFile(path.join(__dirname, "login.html")); // points to html file 
+    child.loadFile(path.join(__dirname, "login.html")); // points to html file
     child.setResizable(false);
     child.setMenu(null);
   });
@@ -133,14 +133,16 @@ app.whenReady().then(() => {
     return fsp.readFile(filePath, "utf8");
   });
 
-  ipcMain.handle("input-validate", (pass) => {
+  ipcMain.handle("input-validate", (_event, pass) => {
+    console.log(pass)
     const res = owasp.test(pass);
+    console.log(res);
     if (!res.strong) {
-      return res.errors[0]
+      return res.errors[0];
     } else {
-      return ""
+      return "";
     }
-  })
+  });
 
   /*
   Takes in username and password from user
@@ -148,7 +150,8 @@ app.whenReady().then(() => {
   Returns string (response)
   */
   ipcMain.handle("create-account", async (event, username, pass) => {
-    try { // try to build vars
+    try {
+      // try to build vars
       const hashedPass = hashPass(pass);
       const passwordFull = buildPlaintext(hashedPass);
       const encryptedPassword = await encryptPassword(passwordFull);
@@ -184,14 +187,15 @@ app.whenReady().then(() => {
     const passwordFull = buildPlaintext(hashedPass); // adds UUID to password ex. (hash:ID=UUID)
     // the public key will be used by the server to create a unique logout token
     const publicKey = fetchPublic(); // gets personal public key
-    const publicKeyClean = publicKey // strips the public key for kotlin compatability 
+    const publicKeyClean = publicKey // strips the public key for kotlin compatability
       .replace("-----BEGIN PUBLIC KEY-----", "")
       .replace("-----END PUBLIC KEY-----", "")
       .replace(/\n/g, "");
     const privateKey = fetchPrivate(); // gets personal private key
     const encryptedPassword = await encryptPassword(passwordFull); // encrypts passwordFull with server public key
 
-    try { // try to send POST req
+    try {
+      // try to send POST req
       const res = await fetch(url + "/accounts/login", {
         method: "POST",
         headers: {
@@ -222,7 +226,7 @@ app.whenReady().then(() => {
         },
         encryptedToken
       );
-      const tokenString = decryptedBuffer.toString("utf8"); 
+      const tokenString = decryptedBuffer.toString("utf8");
       token = Buffer.from(buildPlaintext(tokenString)); // This is the logout token
       return "Login successful!";
     } catch (error) {
@@ -238,7 +242,8 @@ app.whenReady().then(() => {
   */
   ipcMain.handle("logout", async (_event) => {
     const encryptedToken = await encryptPassword(token); // encrypts logout token with server public key
-    try { // try to send POST req
+    try {
+      // try to send POST req
       const res = await fetch(url + "/accounts/logout", {
         method: "POST",
         headers: {
@@ -263,9 +268,10 @@ app.whenReady().then(() => {
   */
   ipcMain.handle("send-file", async (_event, code, filePath) => {
     let fileName = filePath.split("/").pop();
-    let newFileName = filePath.replace(/\.py$/, ".json"); // fileName for code to be written 
+    let newFileName = filePath.replace(/\.py$/, ".json"); // fileName for code to be written
     const codeB64 = forge.util.encode64(code); // the 'code' is just the text from the active open file
-    try { // try to send POST req 
+    try {
+      // try to send POST req
       const res = await fetch(url + "/exchange/forward", {
         method: "POST",
         headers: {
@@ -283,7 +289,8 @@ app.whenReady().then(() => {
       const output = await res.text();
       if (res) {
         let toWrite; // the strigified JSON res
-        try { // try to parse JSON
+        try {
+          // try to parse JSON
           const obj = JSON.parse(output);
           toWrite = JSON.stringify(obj, null, 4);
         } catch {
@@ -305,7 +312,8 @@ app.whenReady().then(() => {
   returns bool
   */
   ipcMain.handle("save-file", async (_evt, path, content) => {
-    try { // try to write file
+    try {
+      // try to write file
       await fsp.writeFile(path, content, "utf8");
       return true;
     } catch (error) {
