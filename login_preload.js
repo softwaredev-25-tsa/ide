@@ -22,4 +22,5 @@ contextBridge.exposeInMainWorld('api', {
       console.error('Invalid data type for success:', success);
     }
   },
+  input_validation: (password) => ipcRenderer.invoke('input-validate'),
 });
