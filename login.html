@@ -37,6 +37,17 @@
       const createButton = document.getElementById("create-button");
       const loginButton = document.getElementById("login-button");
 
+      // Handles input validation for account creation
+      function inputValidation(pass) { 
+        isValid = window.api.login_change(pass)
+        if (isValid != "") {
+          showNotification(isValid, "error-circle", "#F48872")
+          return false
+        } else {
+          return true
+        }
+      }
+
       // Handles user login
       async function login() {
         const username = document.getElementById("username").value;
